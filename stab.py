@@ -1,143 +1,143 @@
-# Import numpy and OpenCV
 import numpy as np
 import cv2
+import matplotlib.pyplot as plt
 
+SMOOTHING_RADIUS = None
+WINDOW_NAME = 'Video Stab'
+preview_time = 5
+
+def update_radius(x):
+    global SMOOTHING_RADIUS
+    SMOOTHING_RADIUS = x
+
+def update_range(x):
+    global preview_time
+    preview_time = x
+
+def create_controls():
+    cv2.namedWindow(WINDOW_NAME)
+    cv2.createTrackbar('Radius', WINDOW_NAME, SMOOTHING_RADIUS, 1000, update_radius)
+    switch = 'Preview Time:'
+    cv2.createTrackbar(switch, WINDOW_NAME, preview_time, 10, update_range)
 
 def movingAverage(curve, radius):
     window_size = 2 * radius + 1
-    # Define the filter
     f = np.ones(window_size) / window_size
-    # Add padding to the boundaries
+
     curve_pad = np.lib.pad(curve, (radius, radius), 'edge')
-    # Apply convolution
     curve_smoothed = np.convolve(curve_pad, f, mode='same')
-    # Remove padding
     curve_smoothed = curve_smoothed[radius:-radius]
-    # return smoothed curve
+
     return curve_smoothed
 
 
 def smooth(trajectory):
     smoothed_trajectory = np.copy(trajectory)
-    # Filter the x, y and angle curves
+
     for i in range(3):
         smoothed_trajectory[:, i] = movingAverage(trajectory[:, i], radius=SMOOTHING_RADIUS)
 
     return smoothed_trajectory
 
 
-def fixBorder(frame):
+def fix_rotation(frame):
     s = frame.shape
-    # Scale the image 4% without moving the center
     T = cv2.getRotationMatrix2D((s[1] / 2, s[0] / 2), 0, 1.04)
+
     frame = cv2.warpAffine(frame, T, (s[1], s[0]))
+
     return frame
 
-if __name__ == '__main__':
-    # The larger the more stable the video, but less reactive to sudden panning
-    SMOOTHING_RADIUS = 50
 
-    # Read input video
-    cap = cv2.VideoCapture('video.mp4')
+def get_transforms(cap, n_frames, out):
 
-    # Get frame count
-    n_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-
-    # Get width and height of video stream
-    w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
-    # Get frames per second (fps)
-    fps = cap.get(cv2.CAP_PROP_FPS)
-
-    # Define the codec for output video
-    fourcc = cv2.VideoWriter_fourcc(*'MJPG')
-
-    # Set up output video
-    out = cv2.VideoWriter('video_out.avi', fourcc, fps, (2 * w, h))
-
-    # Read first frame
+    # get first frame
     _, prev = cap.read()
-
-    # Convert frame to grayscale
     prev_gray = cv2.cvtColor(prev, cv2.COLOR_BGR2GRAY)
 
-    # Pre-define transformation-store array
+    # transforms array
     transforms = np.zeros((n_frames - 1, 3), np.float32)
 
     for i in range(n_frames - 2):
-        # Detect feature points in previous frame
+        # features frame i-1
         prev_pts = cv2.goodFeaturesToTrack(prev_gray,
                                            maxCorners=200,
                                            qualityLevel=0.01,
                                            minDistance=30,
                                            blockSize=3)
 
-        # Read next frame
+        # frame i
         success, curr = cap.read()
         if not success:
             break
-
-            # Convert to grayscale
         curr_gray = cv2.cvtColor(curr, cv2.COLOR_BGR2GRAY)
 
-        # Calculate optical flow (i.e. track feature points)
+        # get optical flow
         curr_pts, status, err = cv2.calcOpticalFlowPyrLK(prev_gray, curr_gray, prev_pts, None)
 
-        # Sanity check
-        assert prev_pts.shape == curr_pts.shape
-
-        # Filter only valid points
+        # get only valid points
         idx = np.where(status == 1)[0]
         prev_pts = prev_pts[idx]
         curr_pts = curr_pts[idx]
 
-        # Find transformation matrix
-        m = cv2.estimateAffinePartial2D(prev_pts, curr_pts)  # will only work with OpenCV-3 or less
-        m = m[0]
-        # Extract traslation
-        dx = m[0, 2]
-        dy = m[1, 2]
-
-        # Extract rotation angle
-        da = np.arctan2(m[1, 0], m[0, 0])
-
-        # Store transformation
-        transforms[i] = [dx, dy, da]
-
-        # Move to next frame
-        prev_gray = curr_gray
+        # get transformation matrix
+        m = cv2.estimateAffinePartial2D(prev_pts, curr_pts)[0]
+        dx = m[0, 2]  # Tx
+        dy = m[1, 2]  # Ty
+        da = np.arctan2(m[1, 0], m[0, 0])  # angle
+        transforms[i] = [dx, dy, da]  # add transform i to transforms array
 
         print("Frame: " + str(i) + "/" + str(n_frames) + " -  Tracked points : " + str(len(prev_pts)))
 
-    # Compute trajectory using cumulative sum of transformations
+        features_prev = np.int0(prev_pts)
+        features_cur = np.int0(curr_pts)
+
+        frame_feat = cv2.cvtColor(prev_gray, cv2.COLOR_GRAY2BGR)
+
+        for feat_prev, feat_cur in zip(features_prev, features_cur):
+            x_feat_prev, y_feat_prev = feat_prev.ravel()
+            cv2.circle(frame_feat, (x_feat_prev, y_feat_prev), 2, (0, 0, 255), -1)
+            x_feat_cur, y_feat_cur = feat_cur.ravel()
+            cv2.circle(frame_feat, (x_feat_cur, y_feat_cur), 2, (255, 0, 0), -1)
+
+        out.write(frame_feat)
+
+        prev_gray = curr_gray
+    out.release()
+
+    return transforms
+
+def compute_and_save(cap, transforms, n_frames, out):
+
+    # get trajectory using cumulative sum of transformations and smooth evrything out
     trajectory = np.cumsum(transforms, axis=0)
-
-    # Create variable to store smoothed trajectory
-    smoothed_trajectory = smooth(trajectory)
-
-    # Calculate difference in smoothed_trajectory and trajectory
-    difference = smoothed_trajectory - trajectory
-
-    # Calculate newer transformation array
+    difference = smooth(trajectory) - trajectory
     transforms_smooth = transforms + difference
 
-    # Reset stream to first frame
+    for axis in range(trajectory.shape[1]):
+        y = trajectory[:, axis].tolist()
+        y1 = [x * -1 for x in  transforms_smooth[:, axis].tolist()]
+        x = list(range(trajectory.shape[0]))
+        plt.plot(x, y, label=("axis" + str(axis)))
+        plt.plot(x, y1, label=("smooth_axis" + str(axis)))
+    plt.legend()
+
+    # reset stream to first frame
     cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
 
-    # Write n_frames-1 transformed frames
+    # process and save n_frames-1 transformed frames
     for i in range(n_frames - 2):
-        # Read next frame
+        # next frame
         success, frame = cap.read()
         if not success:
             break
 
-        # Extract transformations from the new transformation array
+        # transform i for frame i from the new transformation array
         dx = transforms_smooth[i, 0]
         dy = transforms_smooth[i, 1]
         da = transforms_smooth[i, 2]
 
-        # Reconstruct transformation matrix accordingly to new values
+        # build up transformation matrix accordingly to new values
         m = np.zeros((2, 3), np.float32)
         m[0, 0] = np.cos(da)
         m[0, 1] = -np.sin(da)
@@ -146,25 +146,47 @@ if __name__ == '__main__':
         m[0, 2] = dx
         m[1, 2] = dy
 
-        # Apply affine wrapping to the given frame
+        # apply transform to the given frame
         frame_stabilized = cv2.warpAffine(frame, m, (w, h))
+        frame_stabilized = fix_rotation(frame_stabilized)
 
-        # Fix border artifacts
-        frame_stabilized = fixBorder(frame_stabilized)
-
-        # Write the frame to the file
-        frame_out = cv2.hconcat([frame, frame_stabilized])
-
-        # If the image is too big, resize it.
-        if (frame_out.shape[1] > 1920):
-            frame_out = cv2.resize(frame_out, (frame_out.shape[1] / 2, frame_out.shape[0] / 2));
-
+        # viewport
+        frame_out = cv2.vconcat([frame, frame_stabilized])
+        frame_out = cv2.resize(frame_out, (int(frame_out.shape[1] / 2), int(frame_out.shape[0] / 2)))
         cv2.imshow("Before and After", frame_out)
-        cv2.waitKey(10)
-        out.write(frame_out)
+        cv2.waitKey(1)
 
-    # Release video
-    cap.release()
+        # save result
+        out.write(frame_stabilized)
+
     out.release()
-    # Close windows
+
+if __name__ == '__main__':
+
+
+    for i in range(50, 51, 50):
+
+        SMOOTHING_RADIUS = i
+
+        cap = cv2.VideoCapture('video1.mp4')
+        n_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        fps = cap.get(cv2.CAP_PROP_FPS)
+
+        frmt = cv2.VideoWriter_fourcc(*'DIVX')
+        out = cv2.VideoWriter('video_out' + str(i) + '.avi', frmt, fps, (w, h))
+        out_features = cv2.VideoWriter('video_out_features' + str(i) + '.avi', frmt, fps, (w, h))
+
+        w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        fps = cap.get(cv2.CAP_PROP_FPS)
+
+        transforms = get_transforms(cap, n_frames, out_features)
+        compute_and_save(cap, transforms, n_frames, out)
+
+        cap.release()
     cv2.destroyAllWindows()
+    plt.show()
+
+
