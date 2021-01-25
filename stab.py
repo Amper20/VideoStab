@@ -39,16 +39,6 @@ def smooth(trajectory):
 
     return smoothed_trajectory
 
-
-def fix_rotation(frame):
-    s = frame.shape
-    T = cv2.getRotationMatrix2D((s[1] / 2, s[0] / 2), 0, 1.04)
-
-    frame = cv2.warpAffine(frame, T, (s[1], s[0]))
-
-    return frame
-
-
 def get_transforms(cap, n_frames, out):
 
     # get first frame
@@ -115,11 +105,9 @@ def compute_and_save(cap, transforms, n_frames, out):
     transforms_smooth = transforms + difference
 
     for axis in range(trajectory.shape[1]):
-        y = trajectory[:, axis].tolist()
         y1 = [x * -1 for x in  transforms_smooth[:, axis].tolist()]
         x = list(range(trajectory.shape[0]))
-        plt.plot(x, y, label=("axis" + str(axis)))
-        plt.plot(x, y1, label=("smooth_axis" + str(axis)))
+        plt.plot(x, y1, label=("transform_" + str(axis)))
     plt.legend()
 
     # reset stream to first frame
@@ -148,7 +136,6 @@ def compute_and_save(cap, transforms, n_frames, out):
 
         # apply transform to the given frame
         frame_stabilized = cv2.warpAffine(frame, m, (w, h))
-        frame_stabilized = fix_rotation(frame_stabilized)
 
         # viewport
         frame_out = cv2.vconcat([frame, frame_stabilized])
@@ -168,19 +155,15 @@ if __name__ == '__main__':
 
         SMOOTHING_RADIUS = i
 
-        cap = cv2.VideoCapture('video1.mp4')
+        cap = cv2.VideoCapture('video4.mp4')
         n_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         fps = cap.get(cv2.CAP_PROP_FPS)
 
         frmt = cv2.VideoWriter_fourcc(*'DIVX')
-        out = cv2.VideoWriter('video_out' + str(i) + '.avi', frmt, fps, (w, h))
-        out_features = cv2.VideoWriter('video_out_features' + str(i) + '.avi', frmt, fps, (w, h))
-
-        w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        fps = cap.get(cv2.CAP_PROP_FPS)
+        out = cv2.VideoWriter('video_out4.avi', frmt, fps, (w, h))
+        out_features = cv2.VideoWriter('video_out_features.avi', frmt, fps, (w, h))
 
         transforms = get_transforms(cap, n_frames, out_features)
         compute_and_save(cap, transforms, n_frames, out)

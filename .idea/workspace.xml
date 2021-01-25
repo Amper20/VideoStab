@@ -2,12 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="5f0be692-1e69-44ad-a360-cb79e81dad3a" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/VideoStab.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/VideoStab.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/stab.py" beforeDir="false" afterPath="$PROJECT_DIR$/stab.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/video.mp4" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/video_out.avi" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/video_out50.avi" beforeDir="false" afterPath="$PROJECT_DIR$/video_out50.avi" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/video_out_features50.avi" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -167,13 +165,8 @@
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/stab.py</url>
-          <line>112</line>
+          <line>102</line>
           <option name="timeStamp" value="2" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/stab.py</url>
-          <line>62</line>
-          <option name="timeStamp" value="3" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
