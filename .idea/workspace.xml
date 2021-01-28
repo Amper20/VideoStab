@@ -3,9 +3,12 @@
   <component name="ChangeListManager">
     <list default="true" id="5f0be692-1e69-44ad-a360-cb79e81dad3a" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Prezentare1.pptx" beforeDir="false" afterPath="$PROJECT_DIR$/Prezentare1.pptx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/stab.py" beforeDir="false" afterPath="$PROJECT_DIR$/stab.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/video_out50.avi" beforeDir="false" afterPath="$PROJECT_DIR$/video_out50.avi" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/video_out_features50.avi" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/video_out1.avi" beforeDir="false" afterPath="$PROJECT_DIR$/video_out1.avi" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/video_out4.avi" beforeDir="false" afterPath="$PROJECT_DIR$/video_out4.avi" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/video_out_features.avi" beforeDir="false" afterPath="$PROJECT_DIR$/video_out_features.avi" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -157,6 +160,18 @@
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="1" />
   </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="oldMeFiltersMigrated" value="true" />
+  </component>
   <component name="VcsContentAnnotationSettings">
     <option name="myLimit" value="2678400000" />
   </component>
@@ -165,10 +180,17 @@
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/stab.py</url>
-          <line>102</line>
-          <option name="timeStamp" value="2" />
+          <line>99</line>
+          <option name="timeStamp" value="10" />
         </line-breakpoint>
       </breakpoints>
+      <default-breakpoints>
+        <breakpoint type="python-exception">
+          <properties notifyOnTerminate="true" exception="BaseException">
+            <option name="notifyOnTerminate" value="true" />
+          </properties>
+        </breakpoint>
+      </default-breakpoints>
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
